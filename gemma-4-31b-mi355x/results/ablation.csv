@@ -1,0 +1,8 @@
+stage,change,prefill_req_per_s_runs_2_3,prefill_tok_per_s,closed_loop_req_per_s,closed_loop_mean_ttft_s,closed_loop_mean_tpot_ms
+A,baseline,2.78-2.80,27900,2.08,2.59,32.9
+B,+ attention tile entries (stages/ua_v1.json),3.73,37300,2.32,2.08,27.9
+C,+ tuned MXFP4 GEMM rows,3.87,38700,2.42,2.19,28.7
+D,+ CUDA graphs to 256 tokens + d512 short-query tile (stages/ua_v2.json),3.87-3.88,38800,2.88,2.12,22.6
+E,+ fused GELU*up + MXFP4 quant (patch_g4_fuse.py),3.93-3.94,39400,2.94,1.95,22.6
+F,+ split-KV decode attention (patch_aiter_ua3d.py + unified_attention_gfx950.json),3.95,39500,2.98,1.96,22.4
+G,+ native RMSNorm (--kernel-config),4.16-4.17,41700,3.05,1.96,21.0
