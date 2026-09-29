@@ -289,8 +289,8 @@ compile storm, which made every config with the fusion look worse at the knee un
 
 ## Upstream
 
-Everything here that belongs in a library is going upstream, re-measured against current AITER `main` on an MI355X
-(draft pull requests):
+Everything here that belongs in a library is going upstream, re-measured against current AITER and vLLM `main`
+on an MI355X:
 
 | Change | Pull request | On AITER `main` |
 |---|---|---|
@@ -298,7 +298,7 @@ Everything here that belongs in a library is going upstream, re-measured against
 | `scaleM_pad` as a runtime argument in the act_mul + MXFP4 quant kernels | [ROCm/aiter#5927](https://github.com/ROCm/aiter/pull/5927) | 12 JIT compiles across 14 batch sizes become 4; outputs bit-identical |
 | Gemma 4 31B MXFP4 GEMM rows for gfx950 | [ROCm/aiter#5928](https://github.com/ROCm/aiter/pull/5928) | tuned rows 1.03x to 1.82x faster, 1.078x over all 66 shapes |
 | Split-KV attention for head_dim 512 on short-query steps | [ROCm/aiter#5929](https://github.com/ROCm/aiter/pull/5929) | MTP verify steps 1.45x to 3.78x faster; pure decode up to 1.10x |
-| Fused act_mul + MXFP4 quant inside vLLM's AITER MXFP4 GEMM | vLLM: pending | |
+| Fused act_mul + MXFP4 quant inside vLLM's AITER MXFP4 GEMM (a compile pass, any model, any TP) | [vllm-project/vllm#59153](https://github.com/vllm-project/vllm/pull/59153) | +1.8% prefill on the assembly GEMM path, GSM8K unchanged |
 
 One change from this recipe is not going upstream: on AITER `main`, the 256-dim sliding-window layers now run
 AITER's gfx950 Gluon kernel, which is already faster than the Triton kernel with the tuned entry this recipe
