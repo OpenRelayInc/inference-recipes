@@ -278,6 +278,10 @@ compile storm, which made every config with the fusion look worse at the knee un
 - **One host.** All comparisons ran on one GPU host whose other four GPUs were busy with unrelated work. The
   same baseline measured 28.5K prefill tok/s on another MI355X host and 27.8K on this one.
 - **Version-bound.** The tables and patches are for `vllm/vllm-openai-rocm:v0.30.0` and aiter `v0.1.21.post2`.
+- **Newer vLLM: turn the assembly MXFP4 GEMM back on.** vLLM `v0.30.0` always used AITER's assembly MXFP4
+  GEMM on gfx950. Later builds make it opt-in with `VLLM_ROCM_USE_AITER_FP4_ASM_GEMM=1`, and without it the
+  linears run AITER's Triton FP4 GEMM. On a 2026-09-28 nightly (`0.30.1rc1`) this model's prefill throughput
+  (16 concurrent 10K-token prompts, one MI355X) was 18.9K tok/s without the variable and 27.7K with it.
 - **TP1 only for the fusion.** `patch_g4_fuse.py` switches itself off at TP > 1.
 - **Not much left.** MXFP4 GEMMs are now 61% of prefill time and run at 55 to 61% of the MXFP4 peak at the
   clocks the GPU holds under load. Better attention and elementwise kernels are worth about 1.2 to 1.3x more
