@@ -7,6 +7,7 @@ and its arguments, and states its baseline.
 | Recipe | Model | GPU | Engine | Result |
 |---|---|---|---|---|
 | [gemma-4-31b-mi355x](gemma-4-31b-mi355x/) | Gemma 4 31B, AMD Quark MXFP4 + MTP drafter | AMD Instinct MI355X, TP1 | vLLM `v0.30.0` ROCm, two tuned aiter tables, two patches | 1.5x requests per GPU under a 4 s p95 TTFT against our first working MI355X config; GSM8K unchanged |
+| [qwen3.8-27b-mi355x](qwen3.8-27b-mi355x/) | Qwen3.8-27B, FP8 block-scale + MTP | AMD Instinct MI355X, TP1 | vLLM `v0.30.0` ROCm, two tuned aiter tables, two engine flags | 2.67x output tokens per GPU at 48 concurrent against the production `v0.26.0` config; GSM8K unchanged |
 
 ## How a recipe is laid out
 
