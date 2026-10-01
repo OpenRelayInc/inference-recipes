@@ -149,9 +149,11 @@ runs lost to editing a script while bash was executing it.
 
 ## Upstream
 
-| Change | Where |
+Checked against aiter `main` (b68b0e5) and vLLM `main` (2eaa3bc) on 2026-10-01.
+
+| Change | Status |
 |---|---|
-| gfx950 a8w8 block-scale B-preshuffle rows for Qwen3.8-27B (cu_num 256, the 103 rows here) | ROCm/aiter `aiter/configs/model_configs/` |
-| `attn_2d.D_GEQ_256.Q_GEQ_256.DT_fp8_fp8` prefill entry | ROCm/aiter `aiter/ops/triton/configs/gfx950/triton/attention/unified_attention/DEFAULT.json` |
-| Don't fall back to the CK default ABScale instance for untuned shapes: use the preshuffled kernel with aiter's heuristic dispatch, or warn loudly | vLLM `vllm/model_executor/kernels/linear/scaled_mm/aiter.py` (`is_blockscale_bpreshuffle_tuned` gate) |
-| Qwen3.5-layout fused GDN decode on ROCm (`qkvz_layout="flat"`) | vLLM `vllm/model_executor/layers/mamba/gdn/qwen_gdn_linear_attn.py`; already fixed on vLLM main per the nightly source, backport only |
+| gfx950 a8w8 block-scale B-preshuffle rows for Qwen3.8-27B (`aiter/configs/model_configs/`) | [ROCm/aiter#6033](https://github.com/ROCm/aiter/pull/6033). Re-tuned on aiter `main`: 119 rows; 32 of the 103 rows here no longer beat `main`'s default by 3%. With aiter `main` under vLLM `v0.30.0`, the rows take prefill from 15.2K to 28.3K tok/s and c48 from 80.6K to 118.6K TPM |
+| `attn_2d.D_GEQ_256.Q_GEQ_256.DT_fp8_fp8` prefill entry | Already on aiter `main` (ROCm/aiter#5598). On `main`, gfx950 head_dim 256 fp8 prefill runs the Gluon kernel by default and does not read the Triton table |
+| Don't fall back to the CK default ABScale instance for untuned shapes (`is_blockscale_bpreshuffle_tuned` gate) | Not applicable to vLLM `main`: the preshuffled block-scale kernel and its gate were reverted (vllm-project/vllm#57132) and exist only in the `v0.30` release; vllm-project/vllm#56234 re-adds them. On `main`, untuned shapes go through aiter's `gemm_a8w8_blockscale`, which routes M >= 384 to Triton (ROCm/aiter#5586) |
+| Qwen3.5-layout fused GDN decode on ROCm (`qkvz_layout="flat"`) | Fixed on vLLM `main` by vllm-project/vllm#53623 (fbe8a15), after `v0.30.0`; `patch_gdn_aiter_decode.py` is the backport |
