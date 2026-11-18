@@ -14,6 +14,8 @@ rates=("$@"); [[ ${#rates[@]} -eq 0 ]] && rates=(1.0 1.5 2.0 2.5 3.0)
 seed=${SEED:-7}
 out=$WORK/results/k-$name-s$seed; mkdir -p "$out"
 for r in "${rates[@]}"; do
+  result="$out/rate-$r.json"
+  rm -f -- "$result" || exit
   n=$(python3 -c "print(int(float(\"$r\")*${DUR:-150}))")
   docker run --rm --userns=host --network host -v "$WEIGHTS":/tok:ro -v "$out":/out \
     --entrypoint vllm "$CLIENT_IMAGE" bench serve \
@@ -22,6 +24,11 @@ for r in "${rates[@]}"; do
     --random-input-len 9500 --random-range-ratio 0.8 --random-output-len 380 \
     --num-prompts "$n" --request-rate "$r" --seed "$seed" \
     --percentile-metrics ttft,tpot,itl,e2el --metric-percentiles 50,95,99 \
-    --save-result --result-dir /out --result-filename "rate-$r.json" > "$out/rate-$r.log" 2>&1
+    --save-result --result-dir /out --result-filename "rate-$r.json" > "$out/rate-$r.log" 2>&1 || {
+    status=$?
+    rm -f -- "$result"
+    echo "$name rate $r failed (exit $status); see $out/rate-$r.log" >&2
+    exit "$status"
+  }
   echo "$name seed $seed rate $r: $(grep -E "P95 TTFT|Median TPOT|Failed" "$out/rate-$r.log" | tr -s " " | tr "\n" " ")"
 done

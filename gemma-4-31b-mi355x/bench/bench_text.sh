@@ -10,6 +10,8 @@ data=${DATA:-$WORK/data/text_bench.jsonl}
 [[ -f "$data" ]] || { echo "missing $data: run mkdata.py first (bench/README.md)" >&2; exit 1; }
 out=$WORK/results/text-$name; mkdir -p "$out"
 for r in "${rates[@]}"; do
+  result="$out/rate-$r.json"
+  rm -f -- "$result" || exit
   n=$(python3 -c "print(int(float(\"$r\")*${DUR:-150}))")
   docker run --rm --userns=host --network host -v "$WEIGHTS":/tok:ro -v "$out":/out -v "$(dirname "$data")":/data:ro \
     --entrypoint vllm "$CLIENT_IMAGE" bench serve \
@@ -18,6 +20,11 @@ for r in "${rates[@]}"; do
     --custom-output-len 380 --ignore-eos --skip-chat-template \
     --num-prompts "$n" --request-rate "$r" --seed 7 \
     --percentile-metrics ttft,tpot,itl,e2el --metric-percentiles 50,95,99 \
-    --save-result --result-dir /out --result-filename "rate-$r.json" > "$out/rate-$r.log" 2>&1
+    --save-result --result-dir /out --result-filename "rate-$r.json" > "$out/rate-$r.log" 2>&1 || {
+    status=$?
+    rm -f -- "$result"
+    echo "$name rate $r failed (exit $status); see $out/rate-$r.log" >&2
+    exit "$status"
+  }
   echo "$name rate $r done: $(grep -E "P95 TTFT|Median TPOT|Total input tokens|Failed" "$out/rate-$r.log" | tr -s " " | tr "\n" " ")"
 done
